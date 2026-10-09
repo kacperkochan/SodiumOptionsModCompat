@@ -15,6 +15,7 @@ import traben.entity_texture_features.config.ETFConfig;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 #if AFTER_21_1
 import net.caffeinemc.mods.sodium.client.gui.options.OptionGroup;
@@ -47,6 +48,20 @@ import me.jellysquid.mods.sodium.client.gui.options.OptionFlag;
 #endif
 
 public class EmfModelsOptionPage extends OptionPage {
+
+    // EMF 3.3 removed RenderModeChoice.GREEN. CyclingControl throws when the number of names differs from the
+    // number of enum values, which crashed the whole video settings screen. Build the names from the enum
+    // so this works with EMF versions on either side of that change.
+    private static Component[] renderModeNames() {
+        EMFConfig.RenderModeChoice[] values = EMFConfig.RenderModeChoice.values();
+        Component[] names = new Component[values.length];
+        for (int i = 0; i < values.length; i++) {
+            // LINES_AND_TEXTURE -> lines_texture, LINES_AND_TEXTURE_FLASH -> lines_texture_flash
+            String key = values[i].name().toLowerCase(Locale.ROOT).replace("_and_", "_");
+            names[i] = Component.translatable("entity_model_features.config.render." + key);
+        }
+        return names;
+    }
 
     public static final OptionIdentifier<Void> ID = OptionIdentifier.create(VersionUtils.resource(ETF.MOD_ID, "models"));
 
@@ -205,14 +220,7 @@ public class EmfModelsOptionPage extends OptionPage {
                                         //.setId(VersionUtils.resource(EMF.MOD_ID, "render"))
                                         .setName(Component.translatable("entity_model_features.config.render"))
                                         .setTooltip(Component.translatable("entity_model_features.config.render.tooltip"))
-                                        .setControl((opt) -> new CyclingControl<>(opt, EMFConfig.RenderModeChoice.class, new Component[] {
-                                                Component.translatable("entity_model_features.config.render.normal"),
-                                                Component.translatable("entity_model_features.config.render.green"),
-                                                Component.translatable("entity_model_features.config.render.lines_texture"),
-                                                Component.translatable("entity_model_features.config.render.lines_texture_flash"),
-                                                Component.translatable("entity_model_features.config.render.lines"),
-                                                Component.translatable("entity_model_features.config.render.none")
-                                        }))
+                                        .setControl((opt) -> new CyclingControl<>(opt, EMFConfig.RenderModeChoice.class, renderModeNames()))
                                         .setBinding((options, value) -> options.renderModeChoice = value,
                                                 (options) -> options.renderModeChoice)
                                         .build()
